@@ -1,0 +1,35 @@
+name: Auto Update Pickleball EPG
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Tumatakbo araw-araw sa ganap na 3:00 AM UTC
+  workflow_dispatch: # Pwedeng i-trigger nang manual sa GitHub interface
+
+jobs:
+  update-epg:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Fetch and Fix EPG
+        run: python generate_epg.py
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add epg.xml
+          git status
+          git diff-index --quiet HEAD || git commit -m "Auto-update EPG [skip ci]"
+          git push
